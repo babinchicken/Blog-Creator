@@ -7,9 +7,11 @@ interface BlogPreviewProps {
   post: Post
   onBack: () => void
   onPublish: (post: Post) => void
+  publishing?: boolean
+  error?: string
 }
 
-export default function BlogPreview({ post, onBack, onPublish }: BlogPreviewProps) {
+export default function BlogPreview({ post, onBack, onPublish, publishing, error }: BlogPreviewProps) {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center justify-between border-b border-gray-100 pb-4">
@@ -25,8 +27,13 @@ export default function BlogPreview({ post, onBack, onPublish }: BlogPreviewProp
             Preview — {post.template === 'academic' ? 'Academic' : 'Modern'} template
           </span>
         </div>
-        <Button label="Publish Post" onClick={() => onPublish(post)} />
+        <Button label={publishing ? 'Publishing…' : 'Publish Post'} onClick={() => onPublish(post)} disabled={publishing} />
       </div>
+      {error && (
+        <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+          {error}
+        </div>
+      )}
 
       <div className="bg-gray-50 rounded-xl p-6">
         {post.template === 'academic' ? (

@@ -4,16 +4,17 @@ import Button from '../../../atoms/Button'
 
 interface LoginFormProps {
   onLogin: (email: string, password: string) => void
+  disabled?: boolean
 }
 
-export default function LoginForm({ onLogin }: LoginFormProps) {
+export default function LoginForm({ onLogin, disabled }: LoginFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
   const isValid = email.trim().length > 0 && password.trim().length > 0
 
   function handleSubmit() {
-    if (!isValid) return
+    if (!isValid || disabled) return
     onLogin(email.trim(), password)
   }
 
@@ -35,7 +36,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
         type="password"
         required
       />
-      <Button label="Sign In" onClick={handleSubmit} disabled={!isValid} fullWidth />
+      <Button label={disabled ? 'Signing in…' : 'Sign In'} onClick={handleSubmit} disabled={!isValid || disabled} fullWidth />
     </div>
   )
 }

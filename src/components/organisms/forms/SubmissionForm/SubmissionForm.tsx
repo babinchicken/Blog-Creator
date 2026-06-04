@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { PostFormData, TemplateType } from '../../../../types'
+import { generateContent } from '../../../../services/ai'
 import FormField from '../../../molecules/FormField'
 import FileUploader from '../../../molecules/FileUploader'
 import TemplateCard from '../../../molecules/TemplateCard'
@@ -17,8 +18,26 @@ export default function SubmissionForm({ onSubmit, onCancel }: SubmissionFormPro
   const [tagsInput, setTagsInput] = useState('')
   const [template, setTemplate] = useState<TemplateType>('modern')
   const [files, setFiles] = useState<File[]>([])
+  const [generating, setGenerating] = useState(false)
+  const [aiError, setAiError] = useState('')
 
   const isValid = authorName.trim().length > 0 && title.trim().length > 0 && content.trim().length > 0
+  const canGenerate = title.trim().length > 0 && !generating
+
+  async function handleAIGenerate() {
+    if (!canGenerate) return
+    setGenerating(true)
+    setAiError('')
+    try {
+      const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean)
+      const generated = await generateContent(title.trim(), tags, template)
+      setContent(generated)
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : 'AI generation failed. Is the backend running?')
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   function handleSubmit() {
     if (!isValid) return
@@ -54,15 +73,38 @@ export default function SubmissionForm({ onSubmit, onCancel }: SubmissionFormPro
         required
       />
 
-      <FormField
-        label="Content"
-        value={content}
-        onChange={setContent}
-        placeholder="Write your blog post here..."
-        multiline
-        rows={10}
-        required
-      />
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-gray-700">
+            Content <span className="text-red-400">*</span>
+          </label>
+          <button
+            type="button"
+            onClick={handleAIGenerate}
+            disabled={!canGenerate}
+            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full border border-indigo-200 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {generating ? (
+              <>
+                <span className="animate-spin inline-block w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full" />
+                Generating…
+              </>
+            ) : (
+              '✦ Generate with AI'
+            )}
+          </button>
+        </div>
+        {aiError && (
+          <p className="text-xs text-red-500">{aiError}</p>
+        )}
+        <textarea
+          value={content}
+          onChange={e => setContent(e.target.value)}
+          placeholder="Write your blog post here, or use AI to generate content from your title..."
+          rows={10}
+          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-shadow"
+        />
+      </div>
 
       <FormField
         label="Tags"
